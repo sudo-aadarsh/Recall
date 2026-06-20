@@ -9,19 +9,19 @@ const providers: AIProvider[] = [
   // Groq
   {
     client: new OpenAI({ apiKey: process.env.GROQ_API_KEY_1 || '', baseURL: 'https://api.groq.com/openai/v1' }),
-    model: 'llama-3.3-70b-versatile'
+    model: 'llama-3.1-8b-instant'
   },
   {
     client: new OpenAI({ apiKey: process.env.GROQ_API_KEY_2 || '', baseURL: 'https://api.groq.com/openai/v1' }),
-    model: 'llama-3.3-70b-versatile'
+    model: 'llama-3.1-8b-instant'
   },
   {
     client: new OpenAI({ apiKey: process.env.GROQ_API_KEY_3 || '', baseURL: 'https://api.groq.com/openai/v1' }),
-    model: 'llama-3.3-70b-versatile'
+    model: 'llama-3.1-8b-instant'
   },
   {
     client: new OpenAI({ apiKey: process.env.GROQ_API_KEY_4 || '', baseURL: 'https://api.groq.com/openai/v1' }),
-    model: 'llama-3.3-70b-versatile'
+    model: 'llama-3.1-8b-instant'
   },
   // OpenRouter
   {
@@ -76,14 +76,19 @@ export interface SearchResult {
 // ─── Auto-tagging & summarization ───────────────────────────────────
 
 export async function analyzeNote(content: string): Promise<NoteMetadata> {
-  const provider = getNextProvider();
-  const response = await provider.client.chat.completions.create({
-    model: provider.model,
-    max_tokens: 500,
-    messages: [
-      {
-        role: 'user',
-        content: `Analyze the following note and extract structured metadata. Return ONLY a valid JSON object with no markdown, no explanation.
+  const maxRetries = 3;
+  let lastError = null;
+
+  for (let i = 0; i < maxRetries; i++) {
+    const provider = getNextProvider();
+    try {
+      const response = await provider.client.chat.completions.create({
+        model: provider.model,
+        max_tokens: 500,
+        messages: [
+          {
+            role: 'user',
+            content: `Analyze the following note and extract structured metadata. Return ONLY a valid JSON object with no markdown, no explanation.
 
 Note content:
 """
@@ -100,23 +105,29 @@ Return this exact JSON structure:
 
 Rules for tags: lowercase, max 20 chars each, 3-6 tags, topic-focused.
 Rules for key_concepts: noun phrases, 3-5 concepts, the most important ideas.`,
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
 
-  const text = response.choices[0]?.message?.content || '{}';
-
-  try {
-    return JSON.parse(text.trim()) as NoteMetadata;
-  } catch {
-    return {
-      title: content.slice(0, 60) + (content.length > 60 ? '...' : ''),
-      summary: content.slice(0, 120),
-      tags: [],
-      key_concepts: [],
-    };
+      const text = response.choices[0]?.message?.content || '{}';
+      try {
+        return JSON.parse(text.trim()) as NoteMetadata;
+      } catch {
+        return {
+          title: content.slice(0, 60) + (content.length > 60 ? '...' : ''),
+          summary: content.slice(0, 120),
+          tags: [],
+          key_concepts: [],
+        };
+      }
+    } catch (error) {
+      console.error(`Provider ${provider.model} failed:`, error);
+      lastError = error;
+    }
   }
+  
+  throw lastError;
 }
 
 // ─── Auto-splitting ──────────────────────────────────────────────────
@@ -130,14 +141,19 @@ export interface SplitNote {
 }
 
 export async function splitLargeNote(content: string): Promise<SplitNote[]> {
-  const provider = getNextProvider();
-  const response = await provider.client.chat.completions.create({
-    model: provider.model,
-    max_tokens: 4000,
-    messages: [
-      {
-        role: 'user',
-        content: `You are an expert note organizer. The user has provided a very large note. Your task is to split it into logical sub-notes based on topics.
+  const maxRetries = 3;
+  let lastError = null;
+
+  for (let i = 0; i < maxRetries; i++) {
+    const provider = getNextProvider();
+    try {
+      const response = await provider.client.chat.completions.create({
+        model: provider.model,
+        max_tokens: 4000,
+        messages: [
+          {
+            role: 'user',
+            content: `You are an expert note organizer. The user has provided a very large note. Your task is to split it into logical sub-notes based on topics.
 Preserve the original meaning and text as much as possible, just divided.
 
 Original Note:
@@ -164,20 +180,26 @@ Rules:
 - Tags must be lowercase, max 20 chars each.
 - Key concepts must be noun phrases.
 - The 'content' should contain the actual detailed text from the original note for that section.`,
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
+          },
+        ],
+        response_format: { type: "json_object" },
+      });
 
-  const text = response.choices[0]?.message?.content || '{"notes":[]}';
-
-  try {
-    const parsed = JSON.parse(text.trim());
-    return parsed.notes || [];
-  } catch {
-    console.error("Failed to parse split note JSON", text);
-    return [];
+      const text = response.choices[0]?.message?.content || '{"notes":[]}';
+      try {
+        const parsed = JSON.parse(text.trim());
+        return parsed.notes || [];
+      } catch {
+        console.error("Failed to parse split note JSON", text);
+        return [];
+      }
+    } catch (error) {
+      console.error(`Provider ${provider.model} failed in splitLargeNote:`, error);
+      lastError = error;
+    }
   }
+
+  throw lastError;
 }
 
 
