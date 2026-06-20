@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryMany, query, DEMO_WORKSPACE_ID } from '@/lib/db';
+import { queryMany, query, getUserWorkspace } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       ORDER BY similarity DESC
       LIMIT 50
     `;
-    const pairs = await queryMany(sql, [DEMO_WORKSPACE_ID, threshold]);
+    const pairs = await queryMany(sql, [await getUserWorkspace(), threshold]);
 
     return NextResponse.json({ duplicates: pairs }, { status: 200 });
   } catch (error) {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     `, [keepId, deleteId]);
 
     // Finally delete the duplicate note
-    await query(`DELETE FROM notes WHERE id = $1 AND workspace_id = $2`, [deleteId, DEMO_WORKSPACE_ID]);
+    await query(`DELETE FROM notes WHERE id = $1 AND workspace_id = $2`, [deleteId, await getUserWorkspace()]);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

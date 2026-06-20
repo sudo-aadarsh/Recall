@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { query, DEMO_WORKSPACE_ID } from '../lib/db';
+import { query } from '../lib/db';
+const SCRIPT_WORKSPACE_ID = '00000000-0000-0000-0000-000000000001';
 import { analyzeNote, splitLargeNote } from '../lib/ai';
 import { generateEmbedding, formatNoteForEmbedding, toVectorString } from '../lib/embeddings';
 
@@ -69,7 +70,7 @@ async function run() {
             await query(
               `INSERT INTO notes (id, workspace_id, title, content, summary, tags, key_concepts, embedding, source)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8::vector, 'local-import')`,
-              [uuidv4(), DEMO_WORKSPACE_ID, splitTitle, split.content, split.summary, splitTags, split.key_concepts || [], vectorStr]
+              [uuidv4(), SCRIPT_WORKSPACE_ID, splitTitle, split.content, split.summary, splitTags, split.key_concepts || [], vectorStr]
             );
           }
         }
@@ -87,7 +88,7 @@ async function run() {
         await query(
           `INSERT INTO notes (id, workspace_id, title, content, summary, tags, key_concepts, embedding, source)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::vector, 'local-import')`,
-          [uuidv4(), DEMO_WORKSPACE_ID, title, content, aiMetadata.summary, aiMetadata.tags, aiMetadata.key_concepts, vectorStr]
+          [uuidv4(), SCRIPT_WORKSPACE_ID, title, content, aiMetadata.summary, aiMetadata.tags, aiMetadata.key_concepts, vectorStr]
         );
       }
     } catch (e) {

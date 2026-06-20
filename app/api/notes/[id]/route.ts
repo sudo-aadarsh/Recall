@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, queryOne, queryMany, DEMO_WORKSPACE_ID } from '@/lib/db';
+import { query, queryOne, queryMany, getUserWorkspace } from '@/lib/db';
 import { generateEmbedding, formatNoteForEmbedding, toVectorString } from '@/lib/embeddings';
 import { analyzeNote } from '@/lib/ai';
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       `UPDATE notes SET view_count = view_count + 1
        WHERE id = $1 AND workspace_id = $2
        RETURNING *`,
-      [params.id, DEMO_WORKSPACE_ID]
+      [params.id, await getUserWorkspace()]
     );
 
     if (!note) return NextResponse.json({ error: 'Note not found' }, { status: 404 });
@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
          SET title=$1, content=$2, summary=$3, tags=$4, key_concepts=$5, embedding=$6::vector, updated_at=NOW()
          WHERE id=$7 AND workspace_id=$8
          RETURNING *`,
-        [title, content, summary, tags, key_concepts, vectorStr, params.id, DEMO_WORKSPACE_ID]
+        [title, content, summary, tags, key_concepts, vectorStr, params.id, await getUserWorkspace()]
       );
 
       return NextResponse.json({ note });
@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (is_pinned !== undefined) {
       const note = await queryOne(
         `UPDATE notes SET is_pinned=$1, updated_at=NOW() WHERE id=$2 AND workspace_id=$3 RETURNING *`,
-        [is_pinned, params.id, DEMO_WORKSPACE_ID]
+        [is_pinned, params.id, await getUserWorkspace()]
       );
       return NextResponse.json({ note });
     }
@@ -80,7 +80,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     await query(
       `DELETE FROM notes WHERE id=$1 AND workspace_id=$2`,
-      [params.id, DEMO_WORKSPACE_ID]
+      [params.id, await getUserWorkspace()]
     );
     return NextResponse.json({ success: true });
   } catch (error) {

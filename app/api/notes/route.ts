@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import TurndownService from 'turndown';
-import { query, queryMany, DEMO_WORKSPACE_ID } from '@/lib/db';
+import { query, queryMany, getUserWorkspace } from '@/lib/db';
 import { generateEmbedding, formatNoteForEmbedding, toVectorString } from '@/lib/embeddings';
 import { analyzeNote } from '@/lib/ai';
 import { runHook } from '@/lib/plugins';
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       LEFT JOIN note_connections nc ON nc.from_note_id = n.id
       WHERE n.workspace_id = $1
     `;
-    const params: unknown[] = [DEMO_WORKSPACE_ID];
+    const params: unknown[] = [await getUserWorkspace()];
 
     if (tag) {
       params.push(tag);
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     // Get all unique tags for filter UI
     const tagsResult = await query<{ tag: string }>(
       `SELECT DISTINCT UNNEST(tags) AS tag FROM notes WHERE workspace_id = $1 ORDER BY tag`,
-      [DEMO_WORKSPACE_ID]
+      [await getUserWorkspace()]
     );
 
     return NextResponse.json({
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
              RETURNING id, title, summary, tags, key_concepts, created_at`,
             [
               noteId,
-              DEMO_WORKSPACE_ID,
+              await getUserWorkspace(),
               splitTitle,
               split.content,
               split.summary,
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
        RETURNING id, title, summary, tags, key_concepts, created_at`,
       [
         noteId,
-        DEMO_WORKSPACE_ID,
+        await getUserWorkspace(),
         title,
         finalContent,
         summary,
@@ -232,7 +232,7 @@ async function findAndStoreConnections(
        AND 1 - (embedding <=> $1::vector) > 0.4
      ORDER BY embedding <=> $1::vector
      LIMIT 5`,
-    [vectorStr, DEMO_WORKSPACE_ID, newNoteId]
+    [vectorStr, await getUserWorkspace(), newNoteId]
   );
 
   if (similar.length === 0) return;
@@ -258,7 +258,7 @@ async function processManualConnections(newNoteId: string, content: string): Pro
     // Find note by exact title match (case insensitive)
     const { rows } = await query(
       `SELECT id FROM notes WHERE workspace_id = $1 AND title ILIKE $2 LIMIT 1`,
-      [DEMO_WORKSPACE_ID, link]
+      [await getUserWorkspace(), link]
     );
 
     if (rows.length > 0) {

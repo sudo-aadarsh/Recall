@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { query, queryMany, DEMO_WORKSPACE_ID } from '@/lib/db';
+import { query, queryMany, getUserWorkspace } from '@/lib/db';
 import { generateEmbedding, toVectorString } from '@/lib/embeddings';
 import { askWithContext } from '@/lib/ai';
 import type { SearchResult } from '@/lib/ai';
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Step 2: Retrieve top-8 most relevant notes from Aurora pgvector
     const relevantNotes = await queryMany<SearchResult>(
       `SELECT * FROM search_notes($1::vector, $2, 0.2, 8)`,
-      [vectorStr, DEMO_WORKSPACE_ID]
+      [vectorStr, await getUserWorkspace()]
     );
 
     if (relevantNotes.length === 0) {
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
           query(
             `INSERT INTO qa_history (workspace_id, question, answer, source_note_ids)
              VALUES ($1, $2, $3, $4)`,
-            [DEMO_WORKSPACE_ID, question, fullAnswer, sourceNoteIds]
+            [await getUserWorkspace(), question, fullAnswer, sourceNoteIds]
           ).catch(console.error);
         }
       },

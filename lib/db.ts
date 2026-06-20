@@ -60,5 +60,18 @@ export async function queryMany<T extends QueryResultRow>(
   return result.rows;
 }
 
-// Default workspace ID for the demo (seeded in schema.sql)
-export const DEMO_WORKSPACE_ID = '00000000-0000-0000-0000-000000000001';
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+
+export async function getUserWorkspace(): Promise<string> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !(session.user as any).id) {
+    throw new Error("Unauthorized");
+  }
+  const userId = (session.user as any).id;
+  
+  // Ensure the user has a workspace record (using their userId as the workspace id)
+  await query('INSERT INTO workspaces (id, name, slug) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING', [userId, session.user.name || 'My Workspace', userId]);
+  
+  return userId;
+}

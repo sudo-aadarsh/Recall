@@ -6,8 +6,9 @@ import {
   Brain, Plus, Search, MessageSquare, Network, Tag, Zap,
   Loader2, ArrowLeft, Pin, PinOff, Trash2, ChevronRight,
   Sparkles, AlertCircle, BookOpen, TrendingUp, RefreshCw,
-  Copy, Check, X, Info, Moon, Sun, Download, Paperclip
+  Copy, Check, X, Info, Moon, Sun, Download, Paperclip, LogOut
 } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 
 // ── Types ─────────────────────────────────────────────────────────────
 interface Note {
@@ -136,6 +137,12 @@ function Sidebar({ activeTab, setActiveTab, noteCount, qaCount }: {
           <Link href="/" className="btn-ghost w-full text-xs justify-center">
             <ArrowLeft size={12}/> Home
           </Link>
+          <button 
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="btn-ghost w-full text-xs justify-center text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          >
+            <LogOut size={12}/> Sign Out
+          </button>
         </div>
       </aside>
 
@@ -147,7 +154,16 @@ function Sidebar({ activeTab, setActiveTab, noteCount, qaCount }: {
           </div>
           <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Recall</span>
         </a>
-        <ThemeToggle iconOnly={true} />
+        <div className="flex items-center gap-3">
+          <ThemeToggle iconOnly={true} />
+          <button 
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="text-red-400 hover:text-red-300 transition-colors"
+            title="Sign Out"
+          >
+            <LogOut size={16}/>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Bottom Nav */}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryMany, DEMO_WORKSPACE_ID } from '@/lib/db';
+import { queryMany, getUserWorkspace } from '@/lib/db';
 import { generateEmbedding, toVectorString } from '@/lib/embeddings';
 
 // ─── GET /api/search?q=your+question ────────────────────────────────
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     // The search_notes function was defined in schema.sql
     const results = await queryMany(
       `SELECT * FROM search_notes($1::vector, $2, $3, $4)`,
-      [vectorStr, DEMO_WORKSPACE_ID, threshold, limit]
+      [vectorStr, await getUserWorkspace(), threshold, limit]
     );
 
     return NextResponse.json({

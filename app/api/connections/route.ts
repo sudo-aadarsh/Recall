@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryMany, queryOne, DEMO_WORKSPACE_ID } from '@/lib/db';
+import { queryMany, queryOne, getUserWorkspace } from '@/lib/db';
 import { generateKnowledgeInsights } from '@/lib/ai';
 
 // ─── GET /api/connections ────────────────────────────────────────────
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
        FROM notes
        WHERE workspace_id = $1
        ORDER BY created_at DESC`,
-      [DEMO_WORKSPACE_ID]
+      [await getUserWorkspace()]
     );
 
     const edges = await queryMany(
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
          AND nc.similarity_score > 0.45
        ORDER BY nc.similarity_score DESC
        LIMIT 200`,
-      [DEMO_WORKSPACE_ID]
+      [await getUserWorkspace()]
     );
 
     // Stats
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
        FROM notes n
        LEFT JOIN note_connections nc ON nc.from_note_id = n.id
        WHERE n.workspace_id = $1`,
-      [DEMO_WORKSPACE_ID]
+      [await getUserWorkspace()]
     );
 
     return NextResponse.json({ nodes, edges, stats });
@@ -77,7 +77,7 @@ export async function POST() {
   try {
     const notes = await queryMany<{ title: string; tags: string[] }>(
       `SELECT title, tags FROM notes WHERE workspace_id = $1 ORDER BY created_at DESC LIMIT 50`,
-      [DEMO_WORKSPACE_ID]
+      [await getUserWorkspace()]
     );
 
     if (notes.length < 3) {
