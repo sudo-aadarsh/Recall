@@ -157,17 +157,6 @@ const FEATURES = [
   },
 ];
 
-// ── Comparison table ─────────────────────────────────────────────────
-const COMPARISON = [
-  { feature: 'AI Q&A over notes', obsidian: false, notion: 'partial', second: true },
-  { feature: 'Auto-tagging & titles', obsidian: false, notion: false, second: true },
-  { feature: 'Semantic search', obsidian: false, notion: false, second: true },
-  { feature: 'Auto connection discovery', obsidian: false, notion: false, second: true },
-  { feature: 'Team knowledge base', obsidian: 'partial', notion: true, second: true },
-  { feature: 'Cited answers', obsidian: false, notion: false, second: true },
-  { feature: 'Works without organizing', obsidian: false, notion: false, second: true },
-];
-
 export default function LandingPage() {
   return (
     <div className="min-h-screen neural-bg" style={{ background: 'var(--bg-base)' }}>

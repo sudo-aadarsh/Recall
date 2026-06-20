@@ -62,6 +62,7 @@ export interface NoteMetadata {
   summary: string;
   tags: string[];
   key_concepts: string[];
+  formatted_content: string;
 }
 
 export interface SearchResult {
@@ -76,7 +77,7 @@ export interface SearchResult {
 // ─── Auto-tagging & summarization ───────────────────────────────────
 
 export async function analyzeNote(content: string): Promise<NoteMetadata> {
-  const maxRetries = 3;
+  const maxRetries = providers.length;
   let lastError = null;
 
   for (let i = 0; i < maxRetries; i++) {
@@ -100,7 +101,8 @@ Return this exact JSON structure:
   "title": "A concise, descriptive title (max 10 words)",
   "summary": "One sentence summarizing the core idea (max 20 words)",
   "tags": ["tag1", "tag2", "tag3"],
-  "key_concepts": ["concept1", "concept2", "concept3"]
+  "key_concepts": ["concept1", "concept2", "concept3"],
+  "formatted_content": "The original text rewritten into extremely beautiful, neat, and highly readable Markdown with line breaks, headers, and bullet points. Do not summarize, preserve all detail."
 }
 
 Rules for tags: lowercase, max 20 chars each, 3-6 tags, topic-focused.
@@ -119,6 +121,7 @@ Rules for key_concepts: noun phrases, 3-5 concepts, the most important ideas.`,
           summary: content.slice(0, 120),
           tags: [],
           key_concepts: [],
+          formatted_content: content,
         };
       }
     } catch (error) {
@@ -127,7 +130,14 @@ Rules for key_concepts: noun phrases, 3-5 concepts, the most important ideas.`,
     }
   }
   
-  throw lastError;
+  console.warn('All AI providers failed. Falling back to default metadata.');
+  return {
+    title: content.split('\n')[0].slice(0, 60) + (content.length > 60 ? '...' : ''),
+    summary: content.slice(0, 120) + '...',
+    tags: ['imported'],
+    key_concepts: [],
+    formatted_content: content,
+  };
 }
 
 // ─── Auto-splitting ──────────────────────────────────────────────────
@@ -141,7 +151,7 @@ export interface SplitNote {
 }
 
 export async function splitLargeNote(content: string): Promise<SplitNote[]> {
-  const maxRetries = 3;
+  const maxRetries = providers.length;
   let lastError = null;
 
   for (let i = 0; i < maxRetries; i++) {
@@ -199,7 +209,14 @@ Rules:
     }
   }
 
-  throw lastError;
+  console.warn('All AI providers failed for splitting. Falling back to single chunk.');
+  return [{
+    title: content.split('\n')[0].slice(0, 60) + (content.length > 60 ? '...' : ''),
+    content: content,
+    summary: content.slice(0, 120) + '...',
+    tags: ['imported'],
+    key_concepts: [],
+  }];
 }
 
 

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     let sql = `
       SELECT
-        n.id, n.title, n.content, n.tags, n.summary, n.key_concepts,
+        n.id, n.title, n.content, n.formatted_content, n.tags, n.summary, n.key_concepts,
         n.source, n.is_pinned, n.view_count, n.created_at, n.updated_at,
         COUNT(nc.to_note_id)::INT AS connection_count
       FROM notes n
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
         noteId,
         await getUserWorkspace(),
         title,
-        finalContent,
+        aiMetadata.formatted_content || finalContent,
         summary,
         tags,
         key_concepts,
