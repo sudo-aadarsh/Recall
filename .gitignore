@@ -36,3 +36,4 @@ yarn-error.log*
 
 # local database files
 *.db
+.env*

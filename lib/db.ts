@@ -1,33 +1,5 @@
-import { Pool, QueryResult, QueryResultRow } from 'pg';
-
-// Aurora PostgreSQL connection pool — optimized for serverless Vercel
-// Aurora supports up to 5000 connections but Vercel functions are ephemeral,
-// so we keep pool size small and rely on Aurora's built-in connection pooler.
-
-declare global {
-  var _pgPool: Pool | undefined;
-}
-
-function createPool(): Pool {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error('DATABASE_URL environment variable is not set');
-  }
-
-  return new Pool({
-    connectionString,
-    max: 10,                  // Max connections per Vercel function instance
-    idleTimeoutMillis: 30000, // Close idle connections after 30s
-    connectionTimeoutMillis: 5000,
-    ssl: process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }  // Aurora requires SSL in production
-      : false,
-  });
-}
-
-// Singleton pool — reused across hot-reload in development
-export const pool = globalThis._pgPool ?? createPool();
-if (process.env.NODE_ENV !== 'production') globalThis._pgPool = pool;
+import { QueryResult, QueryResultRow } from 'pg';
+import { pool } from './pool';
 
 // ─── Query helpers ──────────────────────────────────────────────────
 
