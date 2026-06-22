@@ -4,11 +4,6 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "regions": ["iad1"],
-  "env": {
-    "DATABASE_URL": "@database-url",
-    "ANTHROPIC_API_KEY": "@anthropic-api-key",
-    "OPENAI_API_KEY": "@openai-api-key"
-  },
   "headers": [
     {
       "source": "/api/(.*)",
