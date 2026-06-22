@@ -57,8 +57,9 @@ export async function GET(request: NextRequest) {
          COUNT(DISTINCT n.id)::INT AS note_count,
          COUNT(DISTINCT nc.from_note_id)::INT AS connected_notes,
          AVG(nc.similarity_score)::FLOAT AS avg_similarity,
-         (SELECT UNNEST(tags) FROM notes WHERE workspace_id=$1
-          GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 1) AS top_tag
+         (SELECT tag FROM (SELECT UNNEST(tags) AS tag FROM notes WHERE workspace_id=$1) t
+          WHERE tag NOT LIKE 'group-%'
+          GROUP BY tag ORDER BY COUNT(*) DESC LIMIT 1) AS top_tag
        FROM notes n
        LEFT JOIN note_connections nc ON nc.from_note_id = n.id
        WHERE n.workspace_id = $1`,
