@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';

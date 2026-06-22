@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryMany, queryOne, getUserWorkspace } from '@/lib/db';
 import { generateKnowledgeInsights } from '@/lib/ai';
 
+export const dynamic = 'force-dynamic';
+
 // ─── GET /api/connections ────────────────────────────────────────────
 // Returns the full connection graph for the workspace:
 // nodes = notes, edges = connections with similarity scores.
