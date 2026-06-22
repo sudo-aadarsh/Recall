@@ -1194,7 +1194,7 @@ function ConnectionsTab({ notes }: { notes: Note[] }) {
                 edges={edges} 
                 width={containerSize.width} 
                 height={containerSize.height}
-                onNodeClick={id => {
+                onNodeClick={(id: string) => {
                   setConnectionNoteId(id);
                   setShowAddConnection(true);
                 }}
